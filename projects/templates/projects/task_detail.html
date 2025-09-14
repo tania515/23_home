@@ -1,0 +1,148 @@
+{% extends 'projects/base.html' %}
+
+{% block title %}{{ task.title }} - ProjectMate{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>{{ task.title }}</h1>
+    <div>
+        {% if user.is_admin or user in task.project.managers.all %}
+            <a href="{% url 'projects:task_update' task.pk %}" class="btn btn-outline-secondary">Редактировать</a>
+        {% endif %}
+        {% if user.is_admin or user in task.project.managers.all or user in task.project.users.all or user == task.assigned_to %}
+            <form method="post" action="{% url 'projects:task_complete' task.pk %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn {% if task.is_completed %}btn-warning{% else %}btn-success{% endif %}">
+                    {% if task.is_completed %}Возобновить{% else %}Завершить{% endif %}
+                </button>
+            </form>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Описание задачи</h5>
+                <p class="card-text">{{ task.description }}</p>
+
+                <div class="row mt-4">
+                    <div class="col-md-4">
+                        <h6>Статус:</h6>
+                        <span class="badge {% if task.is_completed %}bg-success{% else %}bg-warning{% endif %}">
+                            {% if task.is_completed %}Завершена{% else %}В работе{% endif %}
+                        </span>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Проект:</h6>
+                        <p><a href="{% url 'projects:project_detail' task.project.pk %}">{{ task.project.title }}</a></p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Исполнитель:</h6>
+                        <p>{% if task.assigned_to %}{{ task.assigned_to.email }}{% else %}Не назначен{% endif %}</p>
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <h6>Создатель:</h6>
+                        <p>{{ task.created_by.email }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Дата создания:</h6>
+                        <p>{{ task.created_at|date:"d.m.Y H:i" }}</p>
+                    </div>
+                </div>
+
+                {% if task.updated_at != task.created_at %}
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <h6>Последнее обновление:</h6>
+                        <p>{{ task.updated_at|date:"d.m.Y H:i" }}</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <h4>Комментарии</h4>
+
+        {% if task.comments.all %}
+            {% for comment in task.comments.all %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="card-subtitle text-muted">{{ comment.author.email }}</h6>
+                        <small class="text-muted">{{ comment.created_at|date:"d.m.Y H:i" }}</small>
+                    </div>
+                    <p class="card-text">{{ comment.text }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-info">
+                Комментариев пока нет.
+            </div>
+        {% endif %}
+
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Добавить комментарий</h5>
+                <form method="post" action="{% url 'projects:add_comment' task.pk %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <textarea name="text" class="form-control" rows="4" placeholder="Введите ваш комментарий..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Отправить</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Информация о проекте</h5>
+
+                <h6>Название:</h6>
+                <p><a href="{% url 'projects:project_detail' task.project.pk %}">{{ task.project.title }}</a></p>
+
+                <h6>Описание:</h6>
+                <p class="small">{{ task.project.description|truncatewords:20 }}</p>
+
+                <h6>Менеджеры проекта:</h6>
+                <ul class="list-unstyled small">
+                    {% for manager in task.project.managers.all %}
+                    <li>{{ manager.email }}</li>
+                    {% empty %}
+                    <li class="text-muted">Менеджеры не назначены</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Действия</h5>
+                <a href="{% url 'projects:project_detail' task.project.pk %}" class="btn btn-outline-primary btn-sm w-100 mb-2">
+                    ← Вернуться к проекту
+                </a>
+                {% if user.is_admin or user in task.project.managers.all %}
+                    <a href="{% url 'projects:task_update' task.pk %}" class="btn btn-outline-secondary btn-sm w-100 mb-2">
+                        Редактировать задачу
+                    </a>
+                {% endif %}
+                {% if user.is_admin or user in task.project.managers.all or user in task.project.users.all or user == task.assigned_to %}
+                    <form method="post" action="{% url 'projects:task_complete' task.pk %}" class="d-inline w-100">
+                        {% csrf_token %}
+                        <button type="submit" class="btn {% if task.is_completed %}btn-warning{% else %}btn-success{% endif %} btn-sm w-100">
+                            {% if task.is_completed %}Возобновить задачу{% else %}Завершить задачу{% endif %}
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

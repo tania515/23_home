@@ -1,0 +1,101 @@
+{% extends 'projects/base.html' %}
+
+{% block title %}
+    {% if object %}Редактирование проекта{% else %}Создание проекта{% endif %} - ProjectMate
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title mb-0">
+                    {% if object %}Редактирование проекта{% else %}Создание нового проекта{% endif %}
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label for="{{ form.title.id_for_label }}" class="form-label">Название проекта</label>
+                        {{ form.title }}
+                        {% if form.title.errors %}
+                        <div class="text-danger">
+                            {% for error in form.title.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">Описание</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                        <div class="text-danger">
+                            {% for error in form.description.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Менеджеры проекта</label>
+                        {{ form.managers }}
+                        {% if form.managers.errors %}
+                        <div class="text-danger">
+                            {% for error in form.managers.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        <div class="form-text">Выберите пользователей с ролью "Менеджер" или "Администратор"</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Участники проекта</label>
+                        {{ form.users }}
+                        {% if form.users.errors %}
+                        <div class="text-danger">
+                            {% for error in form.users.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        <div class="form-text">Выберите пользователей, которые будут работать над задачами</div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            {% if object %}Сохранить изменения{% else %}Создать проект{% endif %}
+                        </button>
+                        <a href="{% if object %}{% url 'projects:project_detail' object.pk %}{% else %}{% url 'projects:project_list' %}{% endif %}" 
+                           class="btn btn-outline-secondary">
+                            Отмена
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    select[multiple] {
+        height: 200px;
+    }
+    textarea {
+        min-height: 120px;
+    }
+</style>
+{% endblock %}

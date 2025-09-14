@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ user.email }} - Личный кабинет</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .messages { color: green; list-style: none; padding: 0; }
+        .error { color: red; }
+        .success { color: green; }
+        a { margin-right: 10px; text-decoration: none; color: blue; }
+        a:hover { text-decoration: underline; }
+        ul { list-style: none; padding: 0; }
+        li { margin: 10px 0; padding: 10px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    {% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+        <li class="{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <h1>Личный кабинет: {{ user.email }}</h1>
+    <p><strong>Роль:</strong> {{ user.get_role_display }}</p>
+    <p><strong>Имя:</strong> {{ user.first_name|default:"Не указано" }}</p>
+    <p><strong>Фамилия:</strong> {{ user.last_name|default:"Не указана" }}</p>
+    <p><strong>Дата регистрации:</strong> {{ user.date_joined|date:"d.m.Y" }}</p>
+
+    <div>
+        <a href="{% url 'accounts:change_password' %}">🔒 Сменить пароль</a>
+    </div>
+
+    {% if user.is_admin %}
+        <p><a href="{% url 'projects:project_create' %}">➕ Создать новый проект</a></p>
+    {% endif %}
+
+{% if user.is_admin %}
+    <h3>Все проекты системы</h3>
+    {% if all_projects %}
+        <ul>
+        {% for project in all_projects %}
+         <li>
+            <strong><a href="{% url 'projects:project_detail' project.pk %}">{{ project.title }}</a></strong>
+            <p>{{ project.description|truncatewords:15 }}</p>
+            <div>
+                {% if user == project.created_by %}
+                    <a href="{% url 'projects:project_update' project.pk %}">✏️ Редактировать</a>
+                {% endif %}
+                {% if user.is_admin %}
+                    <a href="{% url 'projects:project_delete' project.pk %}">❌ Удалить</a>
+                {% endif %}
+            </div>
+        </li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+
+    <h3>Проекты, где я участвую</h3>
+{% endif %}
+
+{% if user_projects %}
+<ul>
+{% for project in user_projects %}
+   <li>
+            <strong><a href="{% url 'projects:project_detail' project.pk %}">{{ project.title }}</a></strong>
+            <p>{{ project.description|truncatewords:15 }}</p>
+            <div>
+                {% if user == project.created_by %}
+                    <a href="{% url 'projects:project_update' project.pk %}">✏️ Редактировать</a>
+                {% endif %}
+                {% if user.is_admin %}
+                    <a href="{% url 'projects:project_delete' project.pk %}">❌ Удалить</a>
+                {% endif %}
+            </div>
+        </li>
+{% endfor %}
+</ul>
+{% else %}
+    <p>Нет доступных проектов.</p>
+{% endif %}
+
+    <br>
+    <div>
+        <a href="{% url 'home' %}">🏠 На главную</a>
+        <a href="{% url 'accounts:logout' %}">🚪 Выйти</a>
+    </div>
+</body>
+</html>

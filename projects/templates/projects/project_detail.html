@@ -1,0 +1,119 @@
+{% extends 'projects/base.html' %}
+
+{% block title %}{{ project.title }} - ProjectMate{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>{{ project.title }}</h1>
+    <div>
+        {% if user.is_admin  %}
+            <a href="{% url 'projects:project_update' project.pk %}" class="btn btn-outline-secondary">Редактировать</a>
+        {% endif %}
+        {% if user.is_admin %}
+            <a href="{% url 'projects:project_delete' project.pk %}" class="btn btn-outline-danger">Удалить</a>
+        {% endif %}
+        {% if user.is_admin or user.is_manager %}
+            <a href="{% url 'projects:task_create' project.pk %}" class="btn btn-primary">Добавить задачу</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Описание проекта</h5>
+                <p class="card-text">{{ project.description }}</p>
+                
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <h6>Создатель:</h6>
+                        <p>{{ project.created_by.email }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Дата создания:</h6>
+                        <p>{{ project.created_at|date:"d.m.Y H:i" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h4>Задачи проекта</h4>
+        {% if tasks %}
+            {% for task in tasks %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h5 class="card-title">
+                                {% if task.is_completed %}
+                                <s>{{ task.title }}</s>
+                                {% else %}
+                                {{ task.title }}
+                                {% endif %}
+                            </h5>
+                            <p class="card-text">{{ task.description|truncatewords:30 }}</p>
+                            <p class="text-muted small">
+                                Создана: {{ task.created_by.email }}<br>
+                                {% if task.assigned_to %}Исполнитель: {{ task.assigned_to.email }}{% endif %}
+                            </p>
+                        </div>
+                        <div class="text-end">
+                            {% if task.is_completed %}
+                                <span class="badge bg-success">Завершена</span>
+                            {% else %}
+                                <span class="badge bg-warning">В работе</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{% url 'projects:task_detail' task.pk %}" class="btn btn-sm btn-outline-primary">Подробнее</a>
+                        {% if user.is_admin or user in project.managers.all %}
+                            <a href="{% url 'projects:task_update' task.pk %}" class="btn btn-sm btn-outline-secondary">Редактировать</a>
+                        {% endif %}
+                        {% if user.is_admin or user in project.managers.all or user == task.assigned_to or user in project.users.all %}
+                            <form method="post" action="{% url 'projects:task_complete' task.pk %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm {% if task.is_completed %}btn-warning{% else %}btn-success{% endif %}">
+                                    {% if task.is_completed %}Возобновить{% else %}Завершить{% endif %}
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-info">
+                Задач пока нет. {% if user.is_admin or user.is_manager %}<a href="{% url 'projects:task_create' project.pk %}">Создайте первую задачу</a>{% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Команда проекта</h5>
+                
+                <h6>Менеджеры:</h6>
+                <ul class="list-group list-group-flush mb-3">
+                    {% for manager in project.managers.all %}
+                    <li class="list-group-item">{{ manager.email }} ({{ manager.get_role_display }})</li>
+                    {% empty %}
+                    <li class="list-group-item text-muted">Менеджеры не назначены</li>
+                    {% endfor %}
+                </ul>
+
+                <h6>Участники:</h6>
+                <ul class="list-group list-group-flush">
+                    {% for user in project.users.all %}
+                    <li class="list-group-item">{{ user.email }} ({{ user.get_role_display }})</li>
+                    {% empty %}
+                    <li class="list-group-item text-muted">Участники не назначены</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
