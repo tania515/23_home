@@ -15,6 +15,13 @@ class Project(models.Model):
     def __str__(self):
         return self.title
 
+    def get_all_members(self):
+        """Возвращает всех участников проекта"""
+        return self.managers.all() | self.users.all()
+
+    def is_member(self, user):
+        return self.managers.filter(id=user.id).exists() or self.users.filter(id=user.id).exists()
+
 
 class Task(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks')

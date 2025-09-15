@@ -121,6 +121,14 @@ class TaskCreateView(ManagerRequiredMixin, CreateView):
         messages.success(self.request, 'Задача успешно создана')
         return super().form_valid(form)
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['project'] = self.get_project()  # Убедитесь, что этот метод существует
+        return kwargs
+
+    def get_project(self):
+        return get_object_or_404(Project, id=self.kwargs['project_id'])
+
 
 class TaskUpdateView(ManagerRequiredMixin, UpdateView):
     model = Task

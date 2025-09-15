@@ -13,6 +13,20 @@ class TaskForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'rows': 4}),
         }
 
+    def __init__(self, *args, **kwargs):
+        self.project = kwargs.pop('project', None)
+        super().__init__(*args, **kwargs)
+
+        if self.project:
+            # Ограничиваем выбор только участниками проекта
+            self.fields['assigned_to'].queryset = self.project.get_all_members()
+
+    def clean_assigned_to(self):
+        assigned_to = self.cleaned_data.get('assigned_to')
+        if assigned_to and self.project and not self.project.is_member(assigned_to):
+            raise forms.ValidationError("Выбранный пользователь не является участником проекта")
+        return assigned_to
+
 
 class CommentForm(forms.ModelForm):
     class Meta:
